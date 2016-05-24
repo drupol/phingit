@@ -1,0 +1,2 @@
+# Phingit
+Deployment helper
