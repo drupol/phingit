@@ -1,0 +1,300 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project name="Phingit" default="-phingit:targets">
+    <!-- ============================================  -->
+    <!-- (DEFAULT)  Target: -phingit:targets           -->
+    <!-- ============================================  -->
+    <target name="-phingit:targets" hidden="true">
+        <exec executable="phing" passthru="true">
+            <arg value="-q"/>
+            <arg value="-l"/>
+            <arg value="-f"/>
+            <arg value="${phing.file}"/>
+        </exec>
+    </target>
+
+    <!-- ============================================  -->
+    <!-- Target: -phingit:startup                      -->
+    <!-- ============================================  -->
+    <target name="-phingit:startup" hidden="true">
+        <echo level="verbose">***************************************************</echo>
+        <echo level="verbose">***************************************************</echo>
+        <echo level="verbose">** ${phing.startTime}</echo>
+        <echo level="verbose">** Host operating system: ${host.os}</echo>
+        <echo level="verbose">** Basedir: ${project.basedir}</echo>
+        <echo level="verbose">** PHP version: ${php.version}</echo>
+        <echo level="verbose">** Phing version: ${phing.version}</echo>
+    </target>
+
+    <!-- ============================================  -->
+    <!-- Target: -phingit:requirements                 -->
+    <!-- ============================================  -->
+    <target name="-phingit:requirements" hidden="true">
+        <property file="${project.basedir}/conf/default.phingit.yml"/>
+        <property file="${absfilename}" override="true"/>
+
+        <if>
+            <equals arg1="${repository.directory}" arg2=""/>
+            <then>
+                <fail>
+                    Make sur the repository.directory setting is set.
+                </fail>
+            </then>
+        </if>
+    </target>
+
+    <!-- ============================================  -->
+    <!-- Target: -phingit:git.delete                   -->
+    <!-- ============================================  -->
+    <target name="-phingit:git.delete" hidden="true">
+       <delete dir="${repository.directory}" includeemptydirs="true" quiet="true"/>
+    </target>
+
+    <!-- ============================================  -->
+    <!-- Target: -phingit:git.clone                    -->
+    <!-- ============================================  -->
+    <target name="-phingit:git.clone" hidden="true">
+        <if>
+            <not>
+                <available file="${repository.directory}/.git" type="dir"/>
+            </not>
+            <then>
+                <echo level="verbose">Repository: ${repository.git.url}</echo>
+                <echo level="verbose">Branch: ${repository.git.branch}</echo>
+                <echo level="verbose">Cloning repository in ${repository.directory}...</echo>
+                <phingcall target="-phingit:git.delete"/>
+                <exec executable="git">
+                    <arg value="clone"/>
+                    <arg value="--branch"/>
+                    <arg value="${repository.git.branch}"/>
+                    <arg value="${repository.git.url}"/>
+                    <arg value="${repository.directory}"/>
+                </exec>
+                <exec executable="git">
+                    <arg value="branch"/>
+                    <arg value="--set-upstream-to=origin/${repository.git.branch}"/>
+                    <arg value="${repository.git.branch}"/>
+                </exec>
+            </then>
+        </if>
+    </target>
+
+    <!-- ============================================  -->
+    <!-- Target: -phingit:git.fetch                    -->
+    <!-- ============================================  -->
+    <target name="-phingit:git.fetch" hidden="true">
+        <echo level="verbose">Updating remote and fetching new stuff from remote...</echo>
+        <exec executable="git" dir="${repository.directory}">
+            <arg value="fetch"/>
+            <arg value="--all"/>
+        </exec>
+    </target>
+
+    <!-- ============================================  -->
+    <!-- Target: -phingit:git.clean                    -->
+    <!-- ============================================  -->
+    <target name="-phingit:git.clean" hidden="true">
+        <exec executable="git" dir="${repository.directory}">
+            <arg value="clean"/>
+            <arg value="-f"/>
+            <arg value="-d"/>
+        </exec>
+    </target>
+
+    <!-- ============================================  -->
+    <!-- Target: -phingit:git.reset                    -->
+    <!-- ============================================  -->
+    <target name="-phingit:git.reset" depends="-phingit:git.fetch" hidden="true">
+        <exec executable="git" dir="${repository.directory}">
+            <arg value="reset"/>
+            <arg value="--hard"/>
+        </exec>
+    </target>
+
+    <!-- ============================================  -->
+    <!-- Target: -phingit:git.pull                     -->
+    <!-- ============================================  -->
+    <target name="-phingit:git.pull" depends="-phingit:git.reset" hidden="true">
+        <exec executable="git" dir="${repository.directory}">
+            <arg value="pull"/>
+            <arg value="--all"/>
+            <arg value="-f"/>
+            <arg value="-p"/>
+            <arg value="--rebase"/>
+        </exec>
+    </target>
+
+    <!-- ============================================  -->
+    <!-- Target: -phingit:git.check                    -->
+    <!-- ============================================  -->
+    <target name="-phingit:git.check" depends="-phingit:git.fetch" hidden="true">
+        <exec executable="git" outputProperty="repository.hasunstagedfiles" dir="${repository.directory}">
+            <arg value="ls-files"/>
+            <arg value="--exclude-standard"/>
+            <arg value="--others"/>
+        </exec>
+
+        <if>
+            <not>
+                <equals arg1="${repository.hasunstagedfiles}" arg2=""/>
+            </not>
+            <then>
+                <echo>*************************************</echo>
+                <echo>* The repository has unstaged files *</echo>
+                <echo>*************************************</echo>
+            </then>
+            <else>
+                <echo>************************************</echo>
+                <echo>* No unstaged files detected. Good *</echo>
+                <echo>************************************</echo>
+            </else>
+        </if>
+
+        <exec executable="git" outputProperty="repository.git.local" dir="${repository.directory}">
+            <arg value="rev-parse"/>
+            <arg value="@"/>
+        </exec>
+        <exec executable="git" outputProperty="repository.git.remote" dir="${repository.directory}">
+            <arg value="rev-parse"/>
+            <arg value="@{u}"/>
+        </exec>
+        <exec executable="git" outputProperty="repository.git.base" dir="${repository.directory}">
+            <arg value="merge-base"/>
+            <arg value="@"/>
+            <arg value="@{u}"/>
+        </exec>
+
+        <if>
+            <equals arg1="${repository.git.local}" arg2="${repository.git.remote}"/>
+            <then>
+                <echo>****************************</echo>
+                <echo>* Repository is up to date *</echo>
+                <echo>****************************</echo>
+            </then>
+            <elseif>
+                <equals arg1="${repository.git.local}" arg2="${repository.git.base}"/>
+                <then>
+                    <echo>**********************************</echo>
+                    <echo>* Repository needs to be updated *</echo>
+                    <echo>**********************************</echo>
+                </then>
+            </elseif>
+            <elseif>
+                <equals arg1="${repository.git.remote}" arg2="${repository.git.base}"/>
+                <then>
+                    <echo>***************************</echo>
+                    <echo>* Repository need to push *</echo>
+                    <echo>***************************</echo>
+                </then>
+            </elseif>
+            <else>
+                <echo>***************************</echo>
+                <echo>* Repository has diverged *</echo>
+                <echo>***************************</echo>
+            </else>
+        </if>
+    </target>
+
+    <!-- ============================================  -->
+    <!-- Target: -phingit:configuration-fileset-loop   -->
+    <!-- ============================================  -->
+    <target name="-phingit:configuration-fileset-loop" hidden="true">
+        <foreach param="filename" absparam="absfilename" target="${target}">
+            <fileset dir="${phingit.config.directory}">
+                <exclude name="default.phingit.yml"/>
+                <include name="*.phingit.yml" />
+            </fileset>
+        </foreach>
+    </target>
+
+    <!-- ============================================  -->
+    <!-- Target: -phingit:configuration-actions-loop   -->
+    <!-- ============================================  -->
+    <target name="-phingit:configuration-actions-loop" hidden="true" depends="-phingit:requirements">
+        <echo level="info">***************************************************</echo>
+        <echo level="info">* Processing ${absfilename}...</echo>
+        <echo level="info">*</echo>
+
+        <foreach list="${repository.actions}" param="repository.action" target="-phingit:actions-dispatcher-callback" delimiter="," />
+
+        <echo level="info">*</echo>
+        <echo level="info">* End of processing ${absfilename}.</echo>
+        <echo level="info">***************************************************</echo>
+    </target>
+
+    <!-- ============================================  -->
+    <!-- Target: -phingit:actions-dispatcher-callback  -->
+    <!-- ============================================  -->
+    <target name="-phingit:actions-dispatcher-callback" hidden="true">
+        <if>
+            <isset property="phingit.hook.${repository.action}.pre"/>
+            <then>
+                <phingcall target="-phingit:hook">
+                    <property name="hook" value="phingit.hook.${repository.action}.pre"/>
+                </phingcall>
+            </then>
+        </if>
+
+        <phingcall target="-phingit:${repository.action}"/>
+
+        <if>
+            <isset property="phingit.hook.${repository.action}.post"/>
+            <then>
+                <phingcall target="-phingit:hook">
+                    <property name="hook" value="phingit.hook.${repository.action}.post"/>
+                </phingcall>
+            </then>
+        </if>
+    </target>
+
+    <!-- ============================================  -->
+    <!-- Target: -phingit:hook                         -->
+    <!-- ============================================  -->
+    <target name="-phingit:hook" hidden="true">
+        <property name="hook" value="phingit.hook.${hook}"/>
+        <foreach list="${${hook}}" param="hook.command" target="-phingit:hook-command-callback"/>
+    </target>
+
+    <!-- ============================================  -->
+    <!-- Target: -phingit:hook-command-callback        -->
+    <!-- ============================================  -->
+    <target name="-phingit:hook-command-callback" hidden="true">
+        <if>
+            <not>
+                <available file="${repository.directory}" type="dir"/>
+            </not>
+            <then>
+                <property name="hook.command.directory" value="${project.basedir}"/>
+            </then>
+            <else>
+                <property name="hook.command.directory" value="${repository.directory}"/>
+            </else>
+        </if>
+
+        <exec command="${hook.command}" passthru="true" dir="${hook.command.directory}"/>
+    </target>
+
+    <!-- ============================================  -->
+    <!-- Target: phingit:main                          -->
+    <!-- ============================================  -->
+    <target name="phingit:main" depends="-phingit:startup" description="Run the main procedure.">
+        <echo level="info">Gathering configuration files...</echo>
+
+        <if>
+            <and>
+                <isset property="phingit.config.directory"/>
+                <available file="phingit.config.directory" type="dir" property="phingit.config.directory.available"/>
+            </and>
+            <then>
+
+            </then>
+            <else>
+                <property name="phingit.config.directory" value="${project.basedir}/conf"/>
+            </else>
+        </if>
+
+        <phingcall target="-phingit:configuration-fileset-loop">
+            <property name="target" value="-phingit:configuration-actions-loop"/>
+        </phingcall>
+    </target>
+</project>
