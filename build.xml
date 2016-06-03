@@ -200,9 +200,20 @@
     <!-- ============================================  -->
     <target name="-phingit:configuration-fileset-loop" hidden="true">
         <foreach param="filename" absparam="absfilename" target="${target}">
-            <fileset dir="${phingit.config.directory}">
+            <fileset dir="${phingit.conf.directory}">
                 <exclude name="default.phingit.yml"/>
                 <include name="*.phingit.yml" />
+            </fileset>
+        </foreach>
+    </target>
+
+    <!-- ============================================  -->
+    <!-- Target: -phingit:hooks-fileset-loop           -->
+    <!-- ============================================  -->
+    <target name="-phingit:hooks-fileset-loop" hidden="true">
+        <foreach param="filename" absparam="absfilename" target="${target}">
+            <fileset dir="${phingit.hooks.directory}">
+                <include name="*.xml" />
             </fileset>
         </foreach>
     </target>
@@ -226,25 +237,19 @@
     <!-- Target: -phingit:actions-dispatcher-callback  -->
     <!-- ============================================  -->
     <target name="-phingit:actions-dispatcher-callback" hidden="true">
-        <if>
-            <isset property="phingit.hook.${repository.action}.pre"/>
-            <then>
-                <phingcall target="-phingit:hook">
-                    <property name="hook" value="phingit.hook.${repository.action}.pre"/>
-                </phingcall>
-            </then>
-        </if>
+        <phingcall target="-phingit:hook">
+            <property name="hook" value="phingit.hook.${repository.action}.pre"/>
+        </phingcall>
 
         <phingcall target="-phingit:${repository.action}"/>
 
-        <if>
-            <isset property="phingit.hook.${repository.action}.post"/>
-            <then>
-                <phingcall target="-phingit:hook">
-                    <property name="hook" value="phingit.hook.${repository.action}.post"/>
-                </phingcall>
-            </then>
-        </if>
+        <phingcall target="-phingit:hook">
+            <property name="hook" value="phingit.hook.${repository.action}.post"/>
+        </phingcall>
+    </target>
+
+    <target name="-phingit:hooks-actions-loop">
+        <phing phingfile="${absfilename}" target="${hook}"/>
     </target>
 
     <!-- ============================================  -->
@@ -252,7 +257,17 @@
     <!-- ============================================  -->
     <target name="-phingit:hook" hidden="true">
         <property name="hook" value="phingit.hook.${hook}"/>
-        <foreach list="${${hook}}" param="hook.command" target="-phingit:hook-command-callback"/>
+
+        <phingcall target="-phingit:hooks-fileset-loop">
+            <property name="target" value="-phingit:hooks-actions-loop"/>
+        </phingcall>
+
+        <if>
+            <isset property="${hook}"/>
+            <then>
+                <foreach list="${${hook}}" param="hook.command" target="-phingit:hook-command-callback"/>
+            </then>
+        </if>
     </target>
 
     <!-- ============================================  -->
@@ -282,14 +297,27 @@
 
         <if>
             <and>
-                <isset property="phingit.config.directory"/>
-                <available file="phingit.config.directory" type="dir" property="phingit.config.directory.available"/>
+                <isset property="phingit.conf.directory"/>
+                <available file="phingit.conf.directory" type="dir" property="phingit.conf.directory.available"/>
             </and>
             <then>
 
             </then>
             <else>
-                <property name="phingit.config.directory" value="${project.basedir}/conf"/>
+                <property name="phingit.conf.directory" value="${project.basedir}/conf"/>
+            </else>
+        </if>
+
+        <if>
+            <and>
+                <isset property="phingit.hooks.directory"/>
+                <available file="phingit.hooks.directory" type="dir" property="phingit.hooks.directory.available"/>
+            </and>
+            <then>
+
+            </then>
+            <else>
+                <property name="phingit.hooks.directory" value="${project.basedir}/hooks"/>
             </else>
         </if>
 

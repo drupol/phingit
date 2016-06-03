@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project name="hooks" default="hooks">
+    <target name="hooks">
+        <echo></echo>
+    </target>
+    <target name="phingit.hook.git.delete.pre">
+        <tstamp/>
+    </target>
+    <target name="phingit.hook.git.delete.post">
+        <tstamp/>
+    </target>
+    <target name="phingit.hook.git.check.pre">
+        <tstamp/>
+    </target>
+    <target name="phingit.hook.git.check.post">
+        <tstamp/>
+    </target>
+    <target name="phingit.hook.git.clone.pre">
+        <tstamp/>
+    </target>
+    <target name="phingit.hook.git.clone.post">
+        <tstamp/>
+    </target>
+    <target name="phingit.hook.git.clean.pre">
+        <tstamp/>
+    </target>
+    <target name="phingit.hook.git.clean.post">
+        <tstamp/>
+    </target>
+    <target name="phingit.hook.git.reset.pre">
+        <tstamp/>
+    </target>
+    <target name="phingit.hook.git.reset.post">
+        <tstamp/>
+    </target>
+    <target name="phingit.hook.git.pull.pre">
+        <tstamp/>
+    </target>
+    <target name="phingit.hook.git.pull.post">
+        <tstamp/>
+    </target>
+</project>

@@ -1,3 +1,5 @@
 .idea
 conf/*.phingit.yml
+hooks/*.xml
 !conf/default.phingit.yml
+!hooks/hooks.xml
