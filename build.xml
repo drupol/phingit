@@ -34,10 +34,10 @@
         <property file="${absfilename}" override="true"/>
 
         <if>
-            <equals arg1="${repository.directory}" arg2=""/>
+            <equals arg1="${phingit.repository.directory}" arg2=""/>
             <then>
                 <fail>
-                    Make sur the repository.directory setting is set.
+                    Make sur the phingit.repository.directory setting is set.
                 </fail>
             </then>
         </if>
@@ -47,7 +47,7 @@
     <!-- Target: -phingit:git.delete                   -->
     <!-- ============================================  -->
     <target name="-phingit:git.delete" hidden="true">
-       <delete dir="${repository.directory}" includeemptydirs="true" quiet="true"/>
+       <delete dir="${phingit.repository.directory}" includeemptydirs="true" quiet="true"/>
     </target>
 
     <!-- ============================================  -->
@@ -56,24 +56,24 @@
     <target name="-phingit:git.clone" hidden="true">
         <if>
             <not>
-                <available file="${repository.directory}/.git" type="dir"/>
+                <available file="${phingit.repository.directory}/.git" type="dir"/>
             </not>
             <then>
-                <echo level="verbose">Repository: ${repository.git.url}</echo>
-                <echo level="verbose">Branch: ${repository.git.branch}</echo>
-                <echo level="verbose">Cloning repository in ${repository.directory}...</echo>
+                <echo level="verbose">Repository: ${phingit.repository.git.url}</echo>
+                <echo level="verbose">Branch: ${phingit.repository.git.branch}</echo>
+                <echo level="verbose">Cloning repository in ${phingit.repository.directory}...</echo>
                 <phingcall target="-phingit:git.delete"/>
                 <exec executable="git">
                     <arg value="clone"/>
                     <arg value="--branch"/>
-                    <arg value="${repository.git.branch}"/>
-                    <arg value="${repository.git.url}"/>
-                    <arg value="${repository.directory}"/>
+                    <arg value="${phingit.repository.git.branch}"/>
+                    <arg value="${phingit.repository.git.url}"/>
+                    <arg value="${phingit.repository.directory}"/>
                 </exec>
                 <exec executable="git">
                     <arg value="branch"/>
-                    <arg value="--set-upstream-to=origin/${repository.git.branch}"/>
-                    <arg value="${repository.git.branch}"/>
+                    <arg value="--set-upstream-to=origin/${phingit.repository.git.branch}"/>
+                    <arg value="${phingit.repository.git.branch}"/>
                 </exec>
             </then>
         </if>
@@ -84,7 +84,7 @@
     <!-- ============================================  -->
     <target name="-phingit:git.fetch" hidden="true">
         <echo level="verbose">Updating remote and fetching new stuff from remote...</echo>
-        <exec executable="git" dir="${repository.directory}">
+        <exec executable="git" dir="${phingit.repository.directory}">
             <arg value="fetch"/>
             <arg value="--all"/>
         </exec>
@@ -94,7 +94,7 @@
     <!-- Target: -phingit:git.clean                    -->
     <!-- ============================================  -->
     <target name="-phingit:git.clean" hidden="true">
-        <exec executable="git" dir="${repository.directory}">
+        <exec executable="git" dir="${phingit.repository.directory}">
             <arg value="clean"/>
             <arg value="-f"/>
             <arg value="-d"/>
@@ -105,7 +105,7 @@
     <!-- Target: -phingit:git.reset                    -->
     <!-- ============================================  -->
     <target name="-phingit:git.reset" depends="-phingit:git.fetch" hidden="true">
-        <exec executable="git" dir="${repository.directory}">
+        <exec executable="git" dir="${phingit.repository.directory}">
             <arg value="reset"/>
             <arg value="--hard"/>
         </exec>
@@ -115,7 +115,7 @@
     <!-- Target: -phingit:git.pull                     -->
     <!-- ============================================  -->
     <target name="-phingit:git.pull" depends="-phingit:git.reset" hidden="true">
-        <exec executable="git" dir="${repository.directory}">
+        <exec executable="git" dir="${phingit.repository.directory}">
             <arg value="pull"/>
             <arg value="--all"/>
             <arg value="-f"/>
@@ -128,7 +128,7 @@
     <!-- Target: -phingit:git.check                    -->
     <!-- ============================================  -->
     <target name="-phingit:git.check" depends="-phingit:git.fetch" hidden="true">
-        <exec executable="git" outputProperty="repository.hasunstagedfiles" dir="${repository.directory}">
+        <exec executable="git" outputProperty="repository.hasunstagedfiles" dir="${phingit.repository.directory}">
             <arg value="ls-files"/>
             <arg value="--exclude-standard"/>
             <arg value="--others"/>
@@ -150,15 +150,15 @@
             </else>
         </if>
 
-        <exec executable="git" outputProperty="repository.git.local" dir="${repository.directory}">
+        <exec executable="git" outputProperty="repository.git.local" dir="${phingit.repository.directory}">
             <arg value="rev-parse"/>
             <arg value="@"/>
         </exec>
-        <exec executable="git" outputProperty="repository.git.remote" dir="${repository.directory}">
+        <exec executable="git" outputProperty="repository.git.remote" dir="${phingit.repository.directory}">
             <arg value="rev-parse"/>
             <arg value="@{u}"/>
         </exec>
-        <exec executable="git" outputProperty="repository.git.base" dir="${repository.directory}">
+        <exec executable="git" outputProperty="repository.git.base" dir="${phingit.repository.directory}">
             <arg value="merge-base"/>
             <arg value="@"/>
             <arg value="@{u}"/>
@@ -226,7 +226,7 @@
         <echo level="info">* Processing ${absfilename}...</echo>
         <echo level="info">*</echo>
 
-        <foreach list="${repository.actions}" param="repository.action" target="-phingit:actions-dispatcher-callback" delimiter="," />
+        <foreach list="${phingit.repository.actions}" param="phingit.repository.action" target="-phingit:actions-dispatcher-callback" delimiter="," />
 
         <echo level="info">*</echo>
         <echo level="info">* End of processing ${absfilename}.</echo>
@@ -234,22 +234,25 @@
     </target>
 
     <!-- ============================================  -->
+    <!-- Target: -phingit:hooks-actions-loop           -->
+    <!-- ============================================  -->
+    <target name="-phingit:hooks-actions-loop">
+        <phing phingfile="${absfilename}" target="${hook}"/>
+    </target>
+
+    <!-- ============================================  -->
     <!-- Target: -phingit:actions-dispatcher-callback  -->
     <!-- ============================================  -->
     <target name="-phingit:actions-dispatcher-callback" hidden="true">
         <phingcall target="-phingit:hook">
-            <property name="hook" value="phingit.hook.${repository.action}.pre"/>
+            <property name="hook" value="phingit.hook.${phingit.repository.action}.pre"/>
         </phingcall>
 
-        <phingcall target="-phingit:${repository.action}"/>
+        <phingcall target="-phingit:${phingit.repository.action}"/>
 
         <phingcall target="-phingit:hook">
-            <property name="hook" value="phingit.hook.${repository.action}.post"/>
+            <property name="hook" value="phingit.hook.${phingit.repository.action}.post"/>
         </phingcall>
-    </target>
-
-    <target name="-phingit:hooks-actions-loop">
-        <phing phingfile="${absfilename}" target="${hook}"/>
     </target>
 
     <!-- ============================================  -->
@@ -276,13 +279,13 @@
     <target name="-phingit:hook-command-callback" hidden="true">
         <if>
             <not>
-                <available file="${repository.directory}" type="dir"/>
+                <available file="${phingit.repository.directory}" type="dir"/>
             </not>
             <then>
                 <property name="hook.command.directory" value="${project.basedir}"/>
             </then>
             <else>
-                <property name="hook.command.directory" value="${repository.directory}"/>
+                <property name="hook.command.directory" value="${phingit.repository.directory}"/>
             </else>
         </if>
 

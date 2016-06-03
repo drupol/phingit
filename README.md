@@ -18,25 +18,40 @@ I first did the script in bash, then I rewrote it using Phing.
 
 # Hooks
 
-Everytime Phingit run an action, it runs one hook before: *the pre hook* and one hook after: *the post hook*.
-
-Hooks are custom commands that you can run. They are defined in the configuration files.
-
-You can run one or multiple commands.
-
+A Hook is a custom command that you can create. Everytime Phingit run an action, it runs one hook before: *the pre hook* and one hook after: *the post hook*.
 By default, commands are executed in the repository directory if it exists, if not in the directory where the build.xml file exists.
+
+There are two ways to create hooks:
+
+- In the configuration file (*.phingit.yml)
+- In a phing build file (*.xml)
 
 To create a hook, you have to follow this particular naming:
 
-```phingit.hook.[HOOK_NAME].pre or phingit.hook.[HOOK_NAME].post```
+```phingit.hook.[HOOK_NAME].pre``` or ```phingit.hook.[HOOK_NAME].post```
 
-Replace *[HOOK_NAME]* with the name of an action.
+Replace ```[HOOK_NAME]``` with the name of an action.
 
 example: I want to run the command: df -h after the 'git.clone' command:
 
 ```
 phingit.hook.git.clone.post:
  - df -h
+```
+
+or in a buildfile ([NAME].xml in the *hooks* directory):
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project name="hooks" default="hooks">
+    <target name="hooks">
+        <tstamp/>
+    </target>
+    <target name="phingit.hook.git.clone.post">
+        <exec command="df -h" passthru="true"/>
+    </target>
+</project>
 ```
 
 I want to run a drush command before the 'git.pull'.
@@ -51,12 +66,14 @@ You can also use properties:
 
 ```
 phingit.hook.git.pull.post:
- - drush --root=${repository.directory} updatedb
+ - drush --root=${phingit.repository.directory} updatedb
 ```
 
 # Command line options
-- By default, Phingit will search for configuration files in the *conf* subdirectory. You can override the path of this
-directory by specifying it on the command line: *phing -f build.xml phingit:main -Dphingit.config.directory=/another/directory*
+- By default, Phingit will search for **configuration** files in the *conf* subdirectory. You can override the path of this
+directory by specifying it on the command line: *phing -f build.xml phingit:main -Dphingit.conf.directory=/another/directory*
+- By default, Phingit will search for **hooks** in the *hooks* subdirectory. You can override the path of this
+directory by specifying it on the command line: *phing -f build.xml phingit:main -Dphingit.hooks.directory=/another/directory*
 
 # Metadata
 - Creation date: 2016/05/24

@@ -1,11 +1,11 @@
 # The repository's git URL.
-repository.git.url: https://git.drupal.org/project/drupal.git
+phingit.repository.git.url: https://git.drupal.org/project/drupal.git
 
 # The repository's branch to use.
-repository.git.branch: 8.2.x
+phingit.repository.git.branch: 8.2.x
 
 # The directory to clone the repository in.
-repository.directory: drupal
+phingit.repository.directory: drupal
 
 # The actions to execute in order.
 #
@@ -16,7 +16,7 @@ repository.directory: drupal
 #  - git.clean
 #  - git.reset
 #  - git.pull
-repository.actions:
+phingit.repository.actions:
  - git.clone
  - git.check
  - git.clean
@@ -58,4 +58,4 @@ repository.actions:
 # example:
 #
 # phingit.hook.git.pull.post:
-#  - drush --root=${repository.directory} updatedb
+#  - drush --root=${phingit.repository.directory} updatedb
