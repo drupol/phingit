@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project name="Phingit.git">
+    <!-- ============================================  -->
+    <!-- Target: -phingit:git.delete                   -->
+    <!-- ============================================  -->
+    <target name="-phingit:git.delete" hidden="true">
+        <delete dir="${phingit.repository.directory}" includeemptydirs="true" quiet="true"/>
+    </target>
+
+    <!-- ============================================  -->
+    <!-- Target: -phingit:git.clone                    -->
+    <!-- ============================================  -->
+    <target name="-phingit:git.clone" hidden="true">
+        <if>
+            <not>
+                <available file="${phingit.repository.directory}/.git" type="dir"/>
+            </not>
+            <then>
+                <echo level="verbose">Repository: ${phingit.repository.git.url}</echo>
+                <echo level="verbose">Branch: ${phingit.repository.git.branch}</echo>
+                <echo level="verbose">Cloning repository in ${phingit.repository.directory}...</echo>
+                <phingcall target="-phingit:git.delete"/>
+                <exec executable="git">
+                    <arg value="clone"/>
+                    <arg value="--branch"/>
+                    <arg value="${phingit.repository.git.branch}"/>
+                    <arg value="${phingit.repository.git.url}"/>
+                    <arg value="${phingit.repository.directory}"/>
+                </exec>
+                <exec executable="git">
+                    <arg value="branch"/>
+                    <arg value="--set-upstream-to=origin/${phingit.repository.git.branch}"/>
+                    <arg value="${phingit.repository.git.branch}"/>
+                </exec>
+            </then>
+        </if>
+    </target>
+
+    <!-- ============================================  -->
+    <!-- Target: -phingit:git.fetch                    -->
+    <!-- ============================================  -->
+    <target name="-phingit:git.fetch" hidden="true">
+        <echo level="verbose">Updating remote and fetching new stuff from remote...</echo>
+        <exec executable="git" dir="${phingit.repository.directory}">
+            <arg value="fetch"/>
+            <arg value="--all"/>
+        </exec>
+    </target>
+
+    <!-- ============================================  -->
+    <!-- Target: -phingit:git.clean                    -->
+    <!-- ============================================  -->
+    <target name="-phingit:git.clean" hidden="true">
+        <exec executable="git" dir="${phingit.repository.directory}">
+            <arg value="clean"/>
+            <arg value="-f"/>
+            <arg value="-d"/>
+        </exec>
+    </target>
+
+    <!-- ============================================  -->
+    <!-- Target: -phingit:git.reset                    -->
+    <!-- ============================================  -->
+    <target name="-phingit:git.reset" depends="-phingit:git.fetch" hidden="true">
+        <exec executable="git" dir="${phingit.repository.directory}">
+            <arg value="reset"/>
+            <arg value="--hard"/>
+        </exec>
+    </target>
+
+    <!-- ============================================  -->
+    <!-- Target: -phingit:git.pull                     -->
+    <!-- ============================================  -->
+    <target name="-phingit:git.pull" depends="-phingit:git.reset" hidden="true">
+        <exec executable="git" dir="${phingit.repository.directory}">
+            <arg value="pull"/>
+            <arg value="--all"/>
+            <arg value="-f"/>
+            <arg value="-p"/>
+            <arg value="--rebase"/>
+        </exec>
+    </target>
+
+    <!-- ============================================  -->
+    <!-- Target: -phingit:git.check                    -->
+    <!-- ============================================  -->
+    <target name="-phingit:git.check" depends="-phingit:git.fetch" hidden="true">
+        <exec executable="git" outputProperty="repository.hasunstagedfiles" dir="${phingit.repository.directory}">
+            <arg value="ls-files"/>
+            <arg value="--exclude-standard"/>
+            <arg value="--others"/>
+        </exec>
+
+        <if>
+            <not>
+                <equals arg1="${repository.hasunstagedfiles}" arg2=""/>
+            </not>
+            <then>
+                <echo> - The repository has unstaged files.</echo>
+            </then>
+            <else>
+                <echo> - No unstaged files detected. Good.</echo>
+            </else>
+        </if>
+
+        <exec executable="git" outputProperty="repository.haslocalchanges" dir="${phingit.repository.directory}">
+            <arg value="status"/>
+            <arg value="--porcelain"/>
+        </exec>
+
+        <if>
+            <not>
+                <equals arg1="${repository.haslocalchanges}" arg2=""/>
+            </not>
+            <then>
+                <echo> - The repository has local changes.</echo>
+            </then>
+            <else>
+                <echo> - The repository has no local changes.</echo>
+            </else>
+        </if>
+
+        <exec executable="git" outputProperty="repository.git.local" dir="${phingit.repository.directory}">
+            <arg value="rev-parse"/>
+            <arg value="@"/>
+        </exec>
+        <exec executable="git" outputProperty="repository.git.remote" dir="${phingit.repository.directory}">
+            <arg value="rev-parse"/>
+            <arg value="@{u}"/>
+        </exec>
+        <exec executable="git" outputProperty="repository.git.base" dir="${phingit.repository.directory}">
+            <arg value="merge-base"/>
+            <arg value="@"/>
+            <arg value="@{u}"/>
+        </exec>
+
+        <if>
+            <equals arg1="${repository.git.local}" arg2="${repository.git.remote}"/>
+            <then>
+                <echo> - Repository is up to date.</echo>
+            </then>
+            <elseif>
+                <equals arg1="${repository.git.local}" arg2="${repository.git.base}"/>
+                <then>
+                    <echo> - Repository needs to be updated.</echo>
+                </then>
+            </elseif>
+            <elseif>
+                <equals arg1="${repository.git.remote}" arg2="${repository.git.base}"/>
+                <then>
+                    <echo> - Repository need to push.</echo>
+                </then>
+            </elseif>
+            <else>
+                <echo> - Repository has diverged.</echo>
+            </else>
+        </if>
+    </target>
+</project>

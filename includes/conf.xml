@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project name="Phingit.conf">
+    <!-- ============================================  -->
+    <!-- Target: -phingit:configuration-fileset-loop   -->
+    <!-- ============================================  -->
+    <target name="-phingit:configuration-fileset-loop" hidden="true">
+        <foreach param="filename" absparam="absfilename" target="${target}">
+            <fileset dir="${phingit.conf.directory}">
+                <exclude name="default.phingit.yml"/>
+                <include name="*.phingit.yml" />
+            </fileset>
+        </foreach>
+    </target>
+
+    <!-- ==================================================  -->
+    <!-- Target: -phingit:configuration-foreach-callback     -->
+    <!-- ==================================================  -->
+    <target name="-phingit:configuration-foreach-callback" hidden="true" depends="-phingit:requirements">
+        <echo level="info">***************************************************</echo>
+        <echo level="info">* Processing ${absfilename}...</echo>
+        <echo level="info">*</echo>
+
+        <foreach list="${phingit.repository.actions}" param="phingit.repository.action" target="-phingit:configuration-actions-foreach-callback" delimiter="," />
+
+        <echo level="info">*</echo>
+        <echo level="info">* End of processing ${absfilename}.</echo>
+        <echo level="info">***************************************************</echo>
+    </target>
+
+    <!-- ==========================================================  -->
+    <!-- Target: -phingit:configuration-actions-foreach-callback     -->
+    <!-- ==========================================================  -->
+    <target name="-phingit:configuration-actions-foreach-callback" hidden="true">
+        <phingcall target="-phingit:hook">
+            <property name="hook" value="phingit.hook.${phingit.repository.action}.pre"/>
+        </phingcall>
+
+        <phingcall target="-phingit:${phingit.repository.action}"/>
+
+        <phingcall target="-phingit:hook">
+            <property name="hook" value="phingit.hook.${phingit.repository.action}.post"/>
+        </phingcall>
+    </target>
+</project>

@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project name="Phingit.hook">
+    <!-- ============================================  -->
+    <!-- Target: -phingit:hooks-fileset-loop           -->
+    <!-- ============================================  -->
+    <target name="-phingit:hooks-fileset-loop" hidden="true">
+        <foreach param="filename" absparam="absfilename" target="${target}">
+            <fileset dir="${phingit.hooks.directory}">
+                <include name="*.xml" />
+            </fileset>
+        </foreach>
+    </target>
+
+    <!-- ============================================  -->
+    <!-- Target: -phingit:hooks-foreach-callback       -->
+    <!-- ============================================  -->
+    <target name="-phingit:hooks-foreach-callback">
+        <phing phingfile="${absfilename}" target="${hook}"/>
+    </target>
+
+    <!-- ============================================  -->
+    <!-- Target: -phingit:hooks-command-callback       -->
+    <!-- ============================================  -->
+    <target name="-phingit:hooks-command-callback" hidden="true">
+        <if>
+            <not>
+                <available file="${phingit.repository.directory}" type="dir"/>
+            </not>
+            <then>
+                <property name="hook.command.directory" value="${project.basedir}"/>
+            </then>
+            <else>
+                <property name="hook.command.directory" value="${phingit.repository.directory}"/>
+            </else>
+        </if>
+
+        <exec command="${hook.command}" passthru="true" dir="${hook.command.directory}"/>
+    </target>
+
+    <!-- ============================================  -->
+    <!-- Target: -phingit:hook                         -->
+    <!-- ============================================  -->
+    <target name="-phingit:hook" hidden="true">
+        <property name="hook" value="phingit.hook.${hook}"/>
+
+        <phingcall target="-phingit:hooks-fileset-loop">
+            <property name="target" value="-phingit:hooks-foreach-callback"/>
+        </phingcall>
+
+        <if>
+            <isset property="${hook}"/>
+            <then>
+                <foreach list="${${hook}}" param="hook.command" target="-phingit:hooks-command-callback"/>
+            </then>
+        </if>
+    </target>
+
+    <!-- ============================================  -->
+    <!-- Target: -phingit:hook-command-callback        -->
+    <!-- ============================================  -->
+    <target name="-phingit:hook-command-callback" hidden="true">
+        <if>
+            <not>
+                <available file="${phingit.repository.directory}" type="dir"/>
+            </not>
+            <then>
+                <property name="hook.command.directory" value="${project.basedir}"/>
+            </then>
+            <else>
+                <property name="hook.command.directory" value="${phingit.repository.directory}"/>
+            </else>
+        </if>
+
+        <exec command="${hook.command}" passthru="true" dir="${hook.command.directory}"/>
+    </target>
+</project>
