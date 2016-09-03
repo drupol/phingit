@@ -2,4 +2,5 @@
 conf/*.phingit.yml
 hooks/*.xml
 !conf/default.phingit.yml
+!conf/phingit.phingit.yml
 !hooks/hooks.xml

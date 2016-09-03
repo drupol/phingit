@@ -1,0 +1,61 @@
+# The repository's git URL.
+phingit.repository.git.url: https://github.com/drupol/phingit.git
+
+# The repository's branch to use.
+phingit.repository.git.branch: master
+
+# The directory to clone the repository in.
+phingit.repository.directory: ${phing.dir}
+
+# The actions to execute in order.
+#
+# Available actions are:
+#  - git.delete
+#  - git.check
+#  - git.clone
+#  - git.clean
+#  - git.reset
+#  - git.pull
+phingit.repository.actions:
+ - git.clone
+ - git.check
+ - git.clean
+ - git.reset
+ - git.pull
+
+# Hooks
+#
+# Hooks are custom commands that you can run.
+# They are defined in the configuration files.
+# You can run one or multiple commands.
+# By default, commands are executed in the repository directory.
+#
+# Everytime Phingit run an action,
+# it runs one hook before: the pre hook
+# and one hook after: the post hook.
+#
+# To create a hook, you have to follow this particular naming:
+#
+# phingit.hook.[HOOK_NAME].pre or phingit.hook.[HOOK_NAME].post
+#
+# Replace [HOOK_NAME] with the name of an action.
+#
+# example:
+#
+# I want to run the command: df -h after the 'git.clone' command:
+#
+# phingit.hook.git.clone.post:
+#  - df -h
+#
+# I want to run a drush command before the 'git.pull'.
+#
+# phingit.hook.git.pull.pre:
+#  - drush status
+#  - drush archive-backup
+#
+# You can also use properties.
+#
+# example:
+#
+# phingit.hook.git.pull.post:
+#  - drush --root=${phingit.repository.directory} updatedb
