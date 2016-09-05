@@ -71,9 +71,24 @@ phingit.hook.git.pull.post:
 
 # Command line options
 - By default, Phingit will search for **configuration** files in the *conf* subdirectory. You can override the path of this
-directory by specifying it on the command line: *phing -f build.xml phingit:main -Dphingit.conf.directory=/another/directory*
+directory by specifying it on the command line: 
+
+```phing -f build.xml phingit:main -Dphingit.conf.directory=/another/directory```
+
 - By default, Phingit will search for **hooks** in the *hooks* subdirectory. You can override the path of this
-directory by specifying it on the command line: *phing -f build.xml phingit:main -Dphingit.hooks.directory=/another/directory*
+directory by specifying it on the command line: 
+
+```phing -f build.xml phingit:main -Dphingit.hooks.directory=/another/directory```
+
+- By default, Phingit will search for **actions** in the *actions* subdirectory. You can add a custom path by specifying it on the command line:
+
+```phing -f build.xml phingit:main -Dphingit.actions.directory=/another/directory```
+
+You may specify multiple custom options in the command line too:
+
+```phing -f build.xml phingit:main -Dphingit.hooks.directory=/another/directory -Dphingit.conf.directory=/another/conf/directory```
+
+Make sure that the command line includes absolute paths.
 
 # Metadata
 - Creation date: 2016/05/24

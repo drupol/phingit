@@ -7,6 +7,26 @@
         </fileset>
     </import>
 
+    <import>
+        <fileset dir="${project.basedir}/actions">
+            <include name="*.xml" />
+        </fileset>
+    </import>
+
+    <if>
+        <and>
+            <isset property="phingit.actions.directory"/>
+            <available file="${phingit.actions.directory}" type="dir" property="phingit.actions.directory.available"/>
+        </and>
+        <then>
+            <import>
+                <fileset dir="${phingit.actions.directory}">
+                    <include name="*.xml" />
+                </fileset>
+            </import>
+        </then>
+    </if>
+
     <!-- ============================================  -->
     <!-- (DEFAULT)  Target: -phingit:targets           -->
     <!-- ============================================  -->
@@ -58,7 +78,7 @@
         <if>
             <and>
                 <isset property="phingit.conf.directory"/>
-                <available file="phingit.conf.directory" type="dir" property="phingit.conf.directory.available"/>
+                <available file="${phingit.conf.directory}" type="dir" property="phingit.conf.directory.available"/>
             </and>
             <then>
 
@@ -71,7 +91,7 @@
         <if>
             <and>
                 <isset property="phingit.hooks.directory"/>
-                <available file="phingit.hooks.directory" type="dir" property="phingit.hooks.directory.available"/>
+                <available file="${phingit.hooks.directory}" type="dir" property="phingit.hooks.directory.available"/>
             </and>
             <then>
 
