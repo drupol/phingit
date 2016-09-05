@@ -15,7 +15,7 @@
     <!-- ============================================  -->
     <!-- Target: -phingit:hooks-foreach-callback       -->
     <!-- ============================================  -->
-    <target name="-phingit:hooks-foreach-callback">
+    <target name="-phingit:hooks-foreach-callback" hidden="true">
         <phing phingfile="${absfilename}" target="${hook}"/>
     </target>
 
